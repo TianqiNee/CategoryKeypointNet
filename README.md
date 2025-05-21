@@ -66,8 +66,8 @@ data/
 > The dataset used in this project will be publicly released via **Baidu Netdisk** and **Google Drive**.  
 > We will update the download links here once they are available:
 >
-> - 📎 **Baidu Netdisk**: _[link to be added]_  
-> - 🌍 **Google Drive**: _[link to be added]_
+> - 📎 **Baidu Netdisk**: *coming soon*  
+> - 🌍 **Google Drive**: *coming soon*
 >
 > Please follow the above directory structure when placing the downloaded data.
 
