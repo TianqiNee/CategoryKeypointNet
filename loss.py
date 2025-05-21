@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class HeatmapLoss(nn.Module):
     """
-    Heatmap loss function, calculates the loss between the predicted heatmap and the ground truth heatmap.
+    Balanced focal loss, calculates the loss between the predicted heatmap and the ground truth heatmap.
     """
     def __init__(self, loss_type="mse"):
         """
@@ -84,54 +84,6 @@ class CrossEntropyLoss(nn.Module):
         loss = loss.mean()
         return loss
 
-class KeypointLoss(nn.Module):
-    # Traditional method loss for comparison
-    def __init__(self):
-        super(KeypointLoss, self).__init__()
-
-    def forward(self, all_scores, gt_heatmap, keypoints_list):
-        """
-        Calculate the keypoint loss.
-        scores: B*K*N, scores of the predicted candidate keypoints [0,1]
-        gt_heatmap: B*N*H*W, mask of the ground truth keypoints, {0,1}
-        keypoints: B*K*2, coordinates of the candidate keypoints
-        """
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        all_scores = all_scores.to(device)
-        gt_heatmap = gt_heatmap.to(device)
-        keypoints_list = keypoints_list.to(device)
-
-        batch_size = gt_heatmap.shape[0]
-        N = gt_heatmap.shape[1]
-        K = all_scores.shape[1]
-
-        loss = 0.0
-        neg_loss = 0.0
-        neg_count = 0
-        pos_loss = 0.0
-
-        for i in range(batch_size):
-            keypoints = keypoints_list[i]  # [K, 2]
-            scores = all_scores[i]         # [K, N]
-            mask = gt_heatmap[i]          # [N, H, W]
-
-            for n in range(N):
-                gt = mask[n, :, :].nonzero().squeeze()  # Coordinate points of the nth keypoint
-                if gt.dim() == 1:
-                    gt = gt.unsqueeze(0)
-
-                for k in range(K):
-                    dists = torch.norm(keypoints[k] - gt, dim=1)  # Distance to all ground truth points
-                    d = torch.min(dists)  # Take the closest distance as the judgment basis
-
-                    if d < 1.0:  # Assume that points less than 1 pixel are positive samples
-                        pos_loss += 10000 / (1 + torch.exp(d)) * torch.log(scores[k, n])
-                    else:
-                        neg_loss += torch.log(1 - scores[k, n])
-                        neg_count += 1
-
-        # Add the positive sample loss directly
-        loss -= pos_loss
 
         # Normalize and add the negative sample loss
         if neg_count > 0:
